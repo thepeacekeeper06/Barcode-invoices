@@ -234,75 +234,31 @@
         .camera-preview {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
             border-radius: 10px;
             overflow: hidden;
             background: #000;
-            min-height: 300px;
         }
         #camera-video {
             width: 100%;
             height: auto;
-            min-height: 300px;
-            max-height: 500px;
-            object-fit: cover;
+            max-height: 400px;
         }
         .scanning-overlay {
             position: absolute;
-            top: 40%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
-            height: 100px;
-            border: 3px solid #10b981;
-            border-radius: 8px;
+            width: 80%;
+            height: 60px;
+            border: 2px solid #10b981;
+            border-radius: 5px;
             animation: scanning 2s ease-in-out infinite;
         }
-        .scanning-overlay::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #10b981;
-            animation: scanLine 2s ease-in-out infinite;
-        }
         @keyframes scanning {
-            0%, 100% { opacity: 0.8; border-color: #10b981; }
-            50% { opacity: 1; border-color: #059669; }
-        }
-        @keyframes scanLine {
-            0%, 100% { transform: translateY(-50px); opacity: 0; }
-            50% { transform: translateY(0); opacity: 1; }
-        }
-        .scan-result {
-            background: #10b981;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            margin: 10px 0;
-            display: none;
-        }
-        @media (max-width: 768px) {
-            .camera-preview {
-                max-width: 100%;
-                min-height: 250px;
-            }
-            #camera-video {
-                min-height: 250px;
-                max-height: 350px;
-            }
-            .scanning-overlay {
-                top: 35%;
-                width: 85%;
-                height: 80px;
-            }
-            .camera-scanner {
-                margin: 10px 0;
-                padding: 15px;
-            }
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
         }
         .scan-instructions {
             margin: 15px 0;
@@ -320,18 +276,6 @@
         }
         .btn-close-scanner:hover {
             background: #b91c1c;
-        }
-        .btn-success {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .btn-success:hover {
-            background: #059669;
-            color: white;
         }
     </style>
 </head>
@@ -468,19 +412,13 @@
             <div id="cameraScanner" class="camera-scanner hidden">
                 <h5><i class="fas fa-camera me-2"></i>Camera Scanner</h5>
                 <div class="scan-instructions">
-                    Position the barcode within the green frame. Hold steady for accurate scanning.
-                </div>
-                <div class="scan-result" id="scanResult">
-                    <i class="fas fa-check-circle me-2"></i>Barcode detected: <span id="scanResultText"></span>
+                    Position the barcode within the frame. The scanner will automatically detect and read the barcode.
                 </div>
                 <div class="camera-preview">
-                    <video id="camera-video" autoplay playsinline muted></video>
+                    <video id="camera-video" autoplay playsinline></video>
                     <div class="scanning-overlay"></div>
                 </div>
                 <div class="mt-3">
-                    <button class="btn btn-success me-2 hidden" id="confirmScanBtn" onclick="confirmScan()">
-                        <i class="fas fa-check me-1"></i>Use This Code
-                    </button>
                     <button class="btn-close-scanner" onclick="stopCameraScanner()">
                         <i class="fas fa-times me-1"></i>Close Scanner
                     </button>
@@ -516,10 +454,6 @@
         let invoiceData = [];
         let cameraStream = null;
         let scannerActive = false;
-        let lastScannedCode = '';
-        let scanConfidenceCount = 0;
-        let scanDebounceTimer = null;
-        let detectedCodes = new Map(); // Track detection frequency
 
         function showTab(tabName) {
             // Hide all tabs
@@ -665,92 +599,69 @@
                 return;
             }
 
-            // Reset scanner state
-            lastScannedCode = '';
-            scanConfidenceCount = 0;
-            detectedCodes.clear();
-            document.getElementById('scanResult').style.display = 'none';
-            document.getElementById('confirmScanBtn').classList.add('hidden');
-
             document.getElementById('cameraScanner').classList.remove('hidden');
             scannerActive = true;
 
-            // Enhanced camera constraints for better scanning
-            const constraints = {
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280, min: 640 },
-                    height: { ideal: 720, min: 480 },
-                    focusMode: 'continuous',
-                    zoom: 1
-                } 
-            };
-
             // Request camera access
-            navigator.mediaDevices.getUserMedia(constraints)
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment', // Use back camera if available
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            })
             .then(function(stream) {
                 cameraStream = stream;
                 const video = document.getElementById('camera-video');
                 video.srcObject = stream;
                 
-                // Initialize Quagga scanner when video is ready
+                // Initialize Quagga scanner
                 video.addEventListener('loadedmetadata', function() {
-                    // Small delay to ensure video is fully loaded
-                    setTimeout(() => {
-                        initializeScanner();
-                    }, 500);
+                    initializeScanner();
                 });
             })
             .catch(function(error) {
                 console.error('Camera access error:', error);
-                alert('Unable to access camera. Please check permissions and try again.');
+                alert('Unable to access camera. Please check permissions.');
                 stopCameraScanner();
             });
         }
 
         function initializeScanner() {
-            const video = document.getElementById('camera-video');
-            const videoRect = video.getBoundingClientRect();
-            
             Quagga.init({
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
-                    target: video,
+                    target: document.querySelector('#camera-video'),
                     constraints: {
-                        width: { min: 640, ideal: 1280 },
-                        height: { min: 480, ideal: 720 },
-                        facingMode: "environment",
-                        focusMode: "continuous"
-                    },
-                    area: { // Define scanning area
-                        top: "25%",
-                        right: "10%",
-                        left: "10%",
-                        bottom: "25%"
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment"
                     }
                 },
                 locator: {
-                    patchSize: "large", // Increased for better accuracy
-                    halfSample: false   // Full sampling for better quality
+                    patchSize: "medium",
+                    halfSample: true
                 },
-                numOfWorkers: navigator.hardwareConcurrency || 4,
-                frequency: 5, // Reduced frequency for more accurate scanning
+                numOfWorkers: 2,
                 decoder: {
                     readers: [
-                        "code_128_reader", // Primary format for your barcodes
-                        "code_39_reader",
+                        "code_128_reader",
                         "ean_reader",
-                        "ean_8_reader"
-                    ],
-                    multiple: false // Only decode one barcode at a time
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader"
+                    ]
                 },
-                locate: true,
-                debug: false
+                locate: true
             }, function(err) {
                 if (err) {
                     console.error('Scanner initialization error:', err);
-                    alert('Failed to initialize barcode scanner. Please try again.');
+                    alert('Failed to initialize barcode scanner');
                     stopCameraScanner();
                     return;
                 }
@@ -758,86 +669,22 @@
                 Quagga.start();
             });
 
-            // Listen for successful scans with validation
+            // Listen for successful scans
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
-                const confidence = result.codeResult.decodedCodes.reduce((sum, code) => sum + (code.error || 0), 0) / result.codeResult.decodedCodes.length;
+                console.log("Barcode detected:", code);
                 
-                // Validate code format and confidence
-                if (isValidInvoiceCode(code) && confidence < 0.3) {
-                    handleBarcodeDetection(code);
-                } else {
-                    console.log("Low confidence or invalid code:", code, "Confidence:", confidence);
-                }
-            });
-        }
-
-        function isValidInvoiceCode(code) {
-            // Add validation for your invoice code format
-            // Adjust this regex based on your actual invoice ID format
-            const invoicePattern = /^[A-Z0-9\-]{8,20}$/; // Basic pattern for alphanumeric codes
-            return invoicePattern.test(code) && code.length >= 8;
-        }
-
-        function handleBarcodeDetection(code) {
-            // Implement confidence-based detection
-            if (!detectedCodes.has(code)) {
-                detectedCodes.set(code, 1);
-            } else {
-                detectedCodes.set(code, detectedCodes.get(code) + 1);
-            }
-
-            // Require multiple detections for confidence
-            if (detectedCodes.get(code) >= 3) {
-                if (scanDebounceTimer) {
-                    clearTimeout(scanDebounceTimer);
-                }
-
-                scanDebounceTimer = setTimeout(() => {
-                    displayScanResult(code);
-                }, 100); // Short debounce to prevent duplicate processing
-            }
-        }
-
-        function displayScanResult(code) {
-            lastScannedCode = code;
-            
-            // Show scan result
-            document.getElementById('scanResultText').textContent = code;
-            document.getElementById('scanResult').style.display = 'block';
-            document.getElementById('confirmScanBtn').classList.remove('hidden');
-            
-            // Pause scanning to prevent multiple detections
-            if (typeof Quagga !== 'undefined') {
-                Quagga.pause();
-            }
-            
-            console.log("Barcode confirmed:", code);
-        }
-
-        function confirmScan() {
-            if (lastScannedCode) {
-                // Fill the search input with confirmed code
-                document.getElementById('searchInput').value = lastScannedCode;
+                // Fill the search input with scanned code
+                document.getElementById('searchInput').value = code;
                 
                 // Stop scanner and search automatically
                 stopCameraScanner();
                 searchInvoice();
-            }
+            });
         }
 
         function stopCameraScanner() {
             scannerActive = false;
-            
-            // Clear timers and reset state
-            if (scanDebounceTimer) {
-                clearTimeout(scanDebounceTimer);
-                scanDebounceTimer = null;
-            }
-            
-            lastScannedCode = '';
-            scanConfidenceCount = 0;
-            detectedCodes.clear();
             
             // Stop Quagga scanner
             if (typeof Quagga !== 'undefined') {
@@ -850,10 +697,8 @@
                 cameraStream = null;
             }
             
-            // Hide scanner UI and reset
+            // Hide scanner UI
             document.getElementById('cameraScanner').classList.add('hidden');
-            document.getElementById('scanResult').style.display = 'none';
-            document.getElementById('confirmScanBtn').classList.add('hidden');
             
             // Clear video element
             const video = document.getElementById('camera-video');
