@@ -497,31 +497,54 @@
             document.getElementById('generateForm').classList.add('hidden');
             document.getElementById('loadingDiv').classList.remove('hidden');
 
+            // Use form submission method for Google Apps Script CORS
+            const form = new FormData();
+            form.append('action', 'generateInvoice');
+            form.append('invoice', JSON.stringify(data));
+
             fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'generateInvoice',
-                    invoice: data
-                })
+                body: form,
+                mode: 'no-cors'
             })
-            .then(response => response.json())
+            .then(() => {
+                // Since we're using no-cors, we won't get a response
+                // Let's verify by searching for the invoice after a delay
+                setTimeout(() => {
+                    verifyInvoiceGeneration(data.invoiceNumber);
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingDiv').classList.add('hidden');
+                document.getElementById('generateForm').classList.remove('hidden');
+                alert('Failed to generate invoice. Please try again.');
+            });
+        }
+
+        function verifyInvoiceGeneration(invoiceNumber) {
+            // Search for the invoice to verify it was created
+            makeGASRequest('getInvoiceById', { id: invoiceNumber })
             .then(result => {
                 document.getElementById('loadingDiv').classList.add('hidden');
                 
-                if (result.status === 'success') {
+                if (result && result.status === 'success') {
+                    const invoice = result.invoice;
                     currentInvoiceData = {
-                        id: result.invoiceId,
-                        ...data
+                        id: invoice.id,
+                        invoiceNumber: invoice.invoiceNumber,
+                        ewaybillNo: invoice.ewaybillNo,
+                        gstNumber: invoice.gstNumber,
+                        productId: invoice.productId,
+                        quantity: invoice.quantity,
+                        totalCost: invoice.totalCost
                     };
                     
-                    document.getElementById('generatedId').textContent = result.invoiceId;
+                    document.getElementById('generatedId').textContent = invoice.id;
                     
                     // Generate barcode
                     document.getElementById('barcodeDiv').innerHTML = '';
-                    JsBarcode("#barcodeDiv", result.invoiceId, {
+                    JsBarcode("#barcodeDiv", invoice.id, {
                         format: "CODE128",
                         width: 2,
                         height: 80,
@@ -537,16 +560,50 @@
 
                     document.getElementById('successDiv').classList.remove('hidden');
                 } else {
-                    alert('Error: ' + result.message);
-                    document.getElementById('generateForm').classList.remove('hidden');
+                    // If verification fails, try a different approach
+                    generateInvoiceAlternative();
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('loadingDiv').classList.add('hidden');
-                document.getElementById('generateForm').classList.remove('hidden');
-                alert('Failed to generate invoice. Please try again.');
+                console.error('Verification error:', error);
+                generateInvoiceAlternative();
             });
+        }
+
+        function generateInvoiceAlternative() {
+            // Alternative method using URL parameters
+            const data = {
+                invoiceNumber: document.getElementById('invoiceNumber').value.trim(),
+                ewaybillNo: document.getElementById('ewaybillNo').value.trim(),
+                gstNumber: document.getElementById('gstNumber').value.trim(),
+                productId: document.getElementById('productId').value.trim(),
+                quantity: document.getElementById('quantity').value,
+                totalCost: document.getElementById('totalCost').value
+            };
+
+            const params = new URLSearchParams({
+                action: 'generateInvoice',
+                invoiceNumber: data.invoiceNumber,
+                ewaybillNo: data.ewaybillNo,
+                gstNumber: data.gstNumber,
+                productId: data.productId,
+                quantity: data.quantity,
+                totalCost: data.totalCost
+            });
+
+            // Create a hidden iframe to submit the request
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = API_URL + '?' + params.toString();
+            document.body.appendChild(iframe);
+
+            // Clean up and try verification after delay
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+                setTimeout(() => {
+                    verifyInvoiceGeneration(data.invoiceNumber);
+                }, 1000);
+            }, 1000);
         }
 
         function resetForm() {
@@ -840,6 +897,50 @@
             }
         }
 
+        // Helper function to make requests to Google Apps Script
+        function makeGASRequest(action, params = {}) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'gasCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                // Create callback function
+                window[callbackName] = function(data) {
+                    resolve(data);
+                    // Clean up
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                };
+
+                // Create script tag for JSONP
+                const script = document.createElement('script');
+                const url = new URL(API_URL);
+                url.searchParams.set('action', action);
+                url.searchParams.set('callback', callbackName);
+                
+                // Add parameters
+                Object.keys(params).forEach(key => {
+                    url.searchParams.set(key, params[key]);
+                });
+
+                script.src = url.toString();
+                script.onerror = () => {
+                    reject(new Error('Failed to load script'));
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                };
+
+                document.head.appendChild(script);
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        reject(new Error('Request timeout'));
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                    }
+                }, 10000);
+            });
+        }
+
         function searchInvoice() {
             const searchTerm = document.getElementById('searchInput').value.trim();
             
@@ -848,12 +949,9 @@
                 return;
             }
 
-            const searchUrl = `${API_URL}?action=getInvoiceById&id=${encodeURIComponent(searchTerm)}`;
-            
-            fetch(searchUrl)
-            .then(response => response.json())
+            makeGASRequest('getInvoiceById', { id: searchTerm })
             .then(result => {
-                if (result.status === 'success') {
+                if (result && result.status === 'success') {
                     const invoice = result.invoice;
                     
                     document.getElementById('scannedId').textContent = invoice.id;
@@ -892,7 +990,7 @@
                     document.getElementById('detailsContent').innerHTML = detailsHtml;
                     document.getElementById('invoiceDetails').classList.remove('hidden');
                 } else {
-                    alert('Invoice not found: ' + result.message);
+                    alert('Invoice not found: ' + (result ? result.message : 'Unknown error'));
                 }
             })
             .catch(error => {
