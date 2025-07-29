@@ -3,511 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KL Technology Solutions - Invoice Barcode System</title>
+    <title>KL Technology Solutions - Invoice System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/JsBarcode/3.11.5/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #1e40af;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --dark-color: #1f2937;
-            --light-color: #f8fafc;
-            --border-color: #e2e8f0;
-            --shadow: 0 10px 25px rgba(0,0,0,0.1);
-            --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px 0;
+            padding: 20px;
         }
-
+        
         .container-main {
             background: white;
-            border-radius: 24px;
+            border-radius: 20px;
             margin: 0 auto;
-            max-width: 1200px;
-            box-shadow: var(--shadow-lg);
+            max-width: 900px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
         }
-
+        
         .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 30px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
         }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
-            animation: float 20s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-
+        
         .company-name {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-            letter-spacing: -0.02em;
-            position: relative;
-            z-index: 2;
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
-
+        
         .company-subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             opacity: 0.9;
-            font-weight: 300;
-            position: relative;
-            z-index: 2;
         }
-
+        
         .nav-tabs {
-            background: var(--light-color);
-            border: none;
-            padding: 0 30px;
+            border-bottom: none;
+            background: #f8f9fa;
+            padding: 0;
         }
-
+        
+        .nav-tabs .nav-item {
+            flex: 1;
+        }
+        
         .nav-tabs .nav-link {
-            color: var(--dark-color);
+            color: #6c757d;
             font-weight: 600;
-            padding: 20px 30px;
+            padding: 20px;
             border: none;
             border-radius: 0;
-            transition: all 0.3s ease;
-            position: relative;
+            text-align: center;
             background: transparent;
+            transition: all 0.3s ease;
         }
-
-        .nav-tabs .nav-link:hover {
-            color: var(--primary-color);
-            background: rgba(37, 99, 235, 0.05);
-        }
-
+        
         .nav-tabs .nav-link.active {
-            background: var(--primary-color);
-            color: white;
-            border-radius: 12px 12px 0 0;
-            box-shadow: var(--shadow);
+            background: white;
+            color: #4f46e5;
+            border-bottom: 3px solid #4f46e5;
         }
-
+        
+        .nav-tabs .nav-link:hover {
+            color: #4f46e5;
+        }
+        
         .content {
             padding: 40px;
-            min-height: 600px;
         }
-
+        
         .form-control {
             border-radius: 12px;
-            border: 2px solid var(--border-color);
-            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            padding: 15px;
             margin-bottom: 20px;
             font-size: 1rem;
-            transition: all 0.3s ease;
-            background: var(--light-color);
+            transition: border-color 0.3s ease;
         }
-
+        
         .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
-            background: white;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
         }
-
+        
         .form-label {
             font-weight: 600;
-            color: var(--dark-color);
+            color: #374151;
             margin-bottom: 8px;
-            font-size: 0.95rem;
         }
-
-        .btn {
-            border-radius: 12px;
-            padding: 15px 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
+        
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            box-shadow: var(--shadow);
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.2s ease;
         }
-
+        
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
+            background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
         }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
-            color: white;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
-            color: white;
-        }
-
-        .btn-outline-primary {
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            background: transparent;
-        }
-
-        .btn-outline-primary:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-        }
-
+        
         .success-box {
-            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 40px;
-            border-radius: 20px;
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
-            margin-top: 30px;
-            box-shadow: var(--shadow);
+            margin-top: 20px;
         }
-
+        
         .barcode-display {
             background: white;
             padding: 30px;
-            border-radius: 16px;
-            margin: 25px 0;
+            border-radius: 15px;
+            margin: 20px 0;
             display: inline-block;
-            box-shadow: var(--shadow);
-            border: 3px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
+        
         .invoice-id {
             font-family: 'Courier New', monospace;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: bold;
             background: rgba(255,255,255,0.2);
-            padding: 15px 25px;
-            border-radius: 12px;
-            margin: 20px 0;
-            letter-spacing: 2px;
+            padding: 12px 25px;
+            border-radius: 8px;
+            margin: 15px 0;
+            letter-spacing: 1px;
         }
-
+        
         .hidden {
             display: none;
         }
-
+        
         .loading {
             text-align: center;
-            padding: 80px;
+            padding: 60px;
         }
-
+        
         .spinner {
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-color);
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
             border-radius: 50%;
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 30px;
+            margin: 0 auto 20px;
         }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
+        
         .invoice-details {
-            background: var(--light-color);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
             padding: 30px;
-            margin: 30px 0;
-            box-shadow: var(--shadow);
+            margin: 20px 0;
         }
-
+        
         .detail-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
         }
-
+        
         .detail-row:last-child {
             border-bottom: none;
         }
-
+        
         .detail-label {
-            font-weight: 600;
-            color: var(--dark-color);
+            font-weight: bold;
+            color: #495057;
         }
-
+        
         .detail-value {
             font-family: 'Courier New', monospace;
-            color: var(--primary-color);
-            font-weight: 500;
+            color: #212529;
         }
-
-        /* Barcode Stack Styles */
-        .barcode-stack {
-            background: var(--light-color);
-            border: 2px solid var(--border-color);
-            border-radius: 20px;
-            padding: 30px;
+        
+        .print-stack {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
             margin-top: 30px;
-            box-shadow: var(--shadow);
         }
-
-        .barcode-item {
+        
+        .print-stack h5 {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .print-item {
             background: white;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .barcode-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .barcode-preview {
-            display: flex;
             align-items: center;
         }
-
-        .barcode-mini {
-            width: 80px;
-            height: 50px;
-            margin-right: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 5px;
-            background: white;
-        }
-
-        .barcode-info {
-            flex-grow: 1;
-        }
-
-        .barcode-id {
+        
+        .print-item-info {
             font-family: 'Courier New', monospace;
-            font-weight: bold;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-
-        .barcode-details {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin-top: 5px;
-        }
-
-        /* Scanner Styles */
-        .scanner-container {
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        #qr-reader {
-            border-radius: 20px;
-            overflow: hidden;
-            margin: 30px auto;
-            box-shadow: var(--shadow);
-        }
-
-        .scanner-tabs {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-            gap: 10px;
-        }
-
-        .scanner-tab {
-            background: var(--light-color);
-            border: 2px solid var(--border-color);
-            padding: 15px 25px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
             font-weight: 600;
         }
-
-        .scanner-tab:hover {
-            background: rgba(37, 99, 235, 0.05);
-            border-color: var(--primary-color);
-        }
-
-        .scanner-tab.active {
-            background: var(--primary-color);
+        
+        .btn-print-action {
+            background: #6366f1;
             color: white;
-            border-color: var(--primary-color);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
         }
-
-        /* Print Styles */
-        .print-label {
-            width: 4in;
-            height: 2.5in;
-            border: 3px solid #000;
-            padding: 15px;
-            margin: 10px;
-            display: inline-block;
+        
+        .btn-clear-action {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .empty-stack {
             text-align: center;
-            page-break-inside: avoid;
-            background: white;
-            box-sizing: border-box;
+            color: #9ca3af;
+            padding: 40px;
         }
-
-        .print-company {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #000;
+        
+        .section-title {
+            color: #4f46e5;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
         }
-
-        .print-barcode {
-            margin: 10px 0;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .print-id {
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            margin-top: 10px;
-            color: #000;
-            letter-spacing: 1px;
-        }
-
+        
         @media print {
-            body {
-                background: white !important;
-                margin: 0;
-                padding: 0;
+            body * {
+                visibility: hidden;
             }
-            
-            .container-main,
-            .header,
-            .nav-tabs,
-            .content {
-                display: none !important;
+            .print-content, .print-content * {
+                visibility: visible;
             }
-            
-            .print-container {
-                display: block !important;
-                position: static !important;
-                visibility: visible !important;
+            .print-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
             }
-            
-            .print-label {
-                width: 4in;
-                height: 2.5in;
-                margin: 0.1in;
-                float: left;
-                border: 3px solid #000 !important;
-                background: white !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }
-            
-            .print-company,
-            .print-id {
-                color: #000 !important;
-                -webkit-print-color-adjust: exact;
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container-main {
-                margin: 10px;
-                border-radius: 20px;
-            }
-            
-            .header {
-                padding: 30px 20px;
-            }
-            
-            .company-name {
-                font-size: 2.2rem;
-            }
-            
-            .content {
-                padding: 30px 20px;
-            }
-            
-            .nav-tabs .nav-link {
-                padding: 15px 20px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Enhanced Visual Effects */
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
     </style>
 </head>
@@ -519,26 +279,28 @@
                 <i class="fas fa-barcode me-3"></i>
                 KL Technology Solutions
             </div>
-            <div class="company-subtitle">Advanced Invoice Barcode Management System</div>
+            <div class="company-subtitle">Invoice Barcode Management System</div>
         </div>
 
         <!-- Navigation -->
-        <ul class="nav nav-tabs" id="mainTabs">
+        <ul class="nav nav-tabs d-flex" id="mainTabs">
             <li class="nav-item">
-                <button class="nav-link active" onclick="showTab('generate')">
-                    <i class="fas fa-plus-circle me-2"></i>Generate Barcode
+                <button class="nav-link active w-100" onclick="showTab('generate')">
+                    <i class="fas fa-plus-circle me-2"></i>Generate
                 </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" onclick="showTab('scan')">
-                    <i class="fas fa-qrcode me-2"></i>Scan & Search
+                <button class="nav-link w-100" onclick="showTab('scan')">
+                    <i class="fas fa-barcode me-2"></i>Scan
                 </button>
             </li>
         </ul>
 
         <!-- Generate Tab -->
         <div id="generateTab" class="content">
-            <h3><i class="fas fa-plus-circle me-2 text-primary"></i>Generate New Invoice Barcode</h3>
+            <h3 class="section-title">
+                <i class="fas fa-plus-circle me-2"></i>Generate New Invoice Barcode
+            </h3>
             
             <div id="generateForm">
                 <div class="row">
@@ -574,7 +336,7 @@
                     </div>
                 </div>
                 
-                <button type="button" class="btn btn-primary btn-lg w-100 mt-4 pulse" onclick="generateInvoice()">
+                <button type="button" class="btn btn-primary btn-lg w-100 mt-4" onclick="generateInvoice()">
                     <i class="fas fa-plus-circle me-2"></i>Generate Invoice Barcode
                 </button>
             </div>
@@ -582,15 +344,14 @@
             <div id="loadingDiv" class="hidden">
                 <div class="loading">
                     <div class="spinner"></div>
-                    <div class="h5">Generating invoice barcode...</div>
-                    <div class="text-muted">Please wait while we process your request</div>
+                    <div style="font-size: 1.1rem; color: #6b7280;">Generating invoice...</div>
                 </div>
             </div>
 
             <div id="successDiv" class="hidden">
-                <div class="success-box card-hover">
-                    <h3><i class="fas fa-check-circle me-2"></i>Invoice Barcode Generated!</h3>
-                    <div class="h5">Your Invoice ID:</div>
+                <div class="success-box">
+                    <h3><i class="fas fa-check-circle me-2"></i>Invoice Generated Successfully!</h3>
+                    <div style="font-size: 1.1rem; margin-bottom: 10px;">Your Invoice ID:</div>
                     <div class="invoice-id" id="generatedId">KLT-12345-678</div>
                     
                     <div class="barcode-display">
@@ -598,93 +359,73 @@
                     </div>
                     
                     <div class="mt-4">
-                        <button class="btn btn-success me-2" onclick="addToStack()">
-                            <i class="fas fa-layer-group me-1"></i>Add to Print Stack
+                        <button class="btn btn-light me-3" onclick="addToPrintStack()">
+                            <i class="fas fa-plus me-2"></i>Add to Print Stack
                         </button>
-                        <button class="btn btn-outline-primary me-2" onclick="downloadBarcode()">
-                            <i class="fas fa-download me-1"></i>Download
+                        <button class="btn btn-light me-3" onclick="downloadBarcode()">
+                            <i class="fas fa-download me-2"></i>Download
                         </button>
-                        <button class="btn btn-outline-primary me-2" onclick="printSingle()">
-                            <i class="fas fa-print me-1"></i>Print Single
-                        </button>
-                        <button class="btn btn-outline-primary" onclick="resetForm()">
-                            <i class="fas fa-plus me-1"></i>New Invoice
+                        <button class="btn btn-light" onclick="resetForm()">
+                            <i class="fas fa-redo me-2"></i>Generate Another
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Barcode Stack -->
-            <div id="barcodeStack" class="barcode-stack hidden">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4><i class="fas fa-layer-group me-2"></i>Print Stack (<span id="stackCount">0</span> items)</h4>
+            <!-- Print Stack Section -->
+            <div class="print-stack">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-layer-group me-2"></i>Print Stack (<span id="stackCount">0</span>)</h5>
                     <div>
-                        <button class="btn btn-primary me-2" onclick="printAll()">
-                            <i class="fas fa-print me-1"></i>Print All (<span id="stackCountBtn">0</span>)
+                        <button class="btn btn-print-action me-2" onclick="printAllBarcodes()" id="printAllBtn" disabled>
+                            <i class="fas fa-print me-1"></i>Print All
                         </button>
-                        <button class="btn btn-outline-danger" onclick="clearStack()">
-                            <i class="fas fa-trash me-1"></i>Clear Stack
+                        <button class="btn btn-clear-action" onclick="clearPrintStack()" id="clearAllBtn" disabled>
+                            <i class="fas fa-trash me-1"></i>Clear All
                         </button>
                     </div>
                 </div>
-                <div id="stackItems">
-                    <!-- Stack items will be added here -->
+                
+                <div id="printStackItems">
+                    <div class="empty-stack">
+                        <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>The print stack is empty.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Scan Tab -->
         <div id="scanTab" class="content hidden">
-            <h3><i class="fas fa-qrcode me-2 text-primary"></i>Scan & Search Invoice</h3>
+            <h3 class="section-title">
+                <i class="fas fa-barcode me-2"></i>Scan Invoice Barcode
+            </h3>
             
-            <!-- Scanner Mode Tabs -->
-            <div class="scanner-tabs">
-                <div class="scanner-tab active" onclick="showScanner('camera')">
-                    <i class="fas fa-camera me-2"></i>Camera Scan
-                </div>
-                <div class="scanner-tab" onclick="showScanner('manual')">
-                    <i class="fas fa-keyboard me-2"></i>Manual Search
-                </div>
-            </div>
-
-            <!-- Camera Scanner -->
-            <div id="cameraScanner" class="scanner-container">
-                <div id="qr-reader"></div>
-                <p class="text-muted">Position the barcode within the frame to scan</p>
-                <button class="btn btn-outline-primary" id="startStopBtn" onclick="toggleScanner()">
-                    <i class="fas fa-play me-1"></i>Start Scanner
-                </button>
-            </div>
-
-            <!-- Manual Scanner -->
-            <div id="manualScanner" class="hidden">
-                <div class="row">
-                    <div class="col-md-8 mx-auto">
-                        <h5 class="mb-3">Search Invoice</h5>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Enter Invoice ID or Number">
-                        <button class="btn btn-primary w-100 mt-3" onclick="searchInvoice()">
-                            <i class="fas fa-search me-2"></i>Search Invoice
-                        </button>
-                    </div>
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <label class="form-label">Search Invoice</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Enter Invoice ID or Invoice Number">
+                    <button class="btn btn-primary w-100 mt-3" onclick="searchInvoice()">
+                        <i class="fas fa-search me-2"></i>Search Invoice
+                    </button>
                 </div>
             </div>
 
-            <!-- Invoice Details -->
             <div id="invoiceDetails" class="hidden">
-                <div class="invoice-details card-hover">
-                    <h4 class="text-center mb-4">Invoice Details</h4>
+                <div class="invoice-details">
+                    <h4 class="text-center mb-4" style="color: #4f46e5; font-weight: 700;">Invoice Details</h4>
                     <div class="text-center">
-                        <div class="invoice-id" id="scannedId">KLT-12345-678</div>
+                        <div class="invoice-id" id="scannedId" style="background: #4f46e5; color: white;">KLT-12345-678</div>
                     </div>
                     <div id="detailsContent">
                         <!-- Details will be shown here -->
                     </div>
                     <div class="text-center mt-4">
-                        <button class="btn btn-primary me-2" onclick="resetSearch()">
-                            <i class="fas fa-redo me-1"></i>Scan Another
+                        <button class="btn btn-primary me-3" onclick="resetSearch()">
+                            <i class="fas fa-search me-2"></i>Search Another
                         </button>
                         <button class="btn btn-outline-primary" onclick="printInvoiceDetails()">
-                            <i class="fas fa-print me-1"></i>Print Details
+                            <i class="fas fa-print me-2"></i>Print Details
                         </button>
                     </div>
                 </div>
@@ -692,39 +433,33 @@
         </div>
     </div>
 
-    <!-- Print Container -->
-    <div class="print-container" style="position: absolute; left: -9999px; top: -9999px;">
-        <div id="printLabels">
-            <!-- Print labels will be generated here -->
-        </div>
+    <!-- Hidden print content -->
+    <div id="printContent" class="print-content" style="display: none;">
+        <!-- Print content will be inserted here -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzd5u_Y-Jy09xZhTgTLK6zC9BkIMUOeNCafvyDKTcSJLED0de0Gr1PlzRY0BeSgn1IwyA/exec";
-        
-        let barcodeStack = [];
         let currentInvoiceData = null;
-        let html5QrCode = null;
-        let scannerActive = false;
+        let printStack = [];
 
         function showTab(tabName) {
+            // Hide all tabs
             document.getElementById('generateTab').classList.add('hidden');
             document.getElementById('scanTab').classList.add('hidden');
             
+            // Remove active class from all nav links
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
             });
             
+            // Show selected tab
             document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            
+            // Add active class to clicked nav link
             event.target.classList.add('active');
-
-            if (tabName === 'scan') {
-                initializeScanner();
-            } else if (scannerActive) {
-                stopScanner();
-            }
         }
 
         function generateInvoice() {
@@ -739,29 +474,29 @@
 
             // Validation
             if (!data.invoiceNumber || !data.ewaybillNo || !data.gstNumber || !data.productId || !data.quantity || !data.totalCost) {
-                alert('⚠️ Please fill all fields');
+                alert('Please fill all fields');
                 return;
             }
 
             if (data.gstNumber.length !== 15) {
-                alert('⚠️ GST number must be exactly 15 characters');
+                alert('GST number must be exactly 15 characters');
                 return;
             }
 
             if (data.quantity <= 0) {
-                alert('⚠️ Quantity must be greater than 0');
+                alert('Quantity must be greater than 0');
                 return;
             }
 
             if (data.totalCost <= 0) {
-                alert('⚠️ Total cost must be greater than 0');
+                alert('Total cost must be greater than 0');
                 return;
             }
 
+            // Show loading
             document.getElementById('generateForm').classList.add('hidden');
             document.getElementById('loadingDiv').classList.remove('hidden');
 
-            // Make actual API call to Google Apps Script
             fetch(API_URL, {
                 method: 'POST',
                 headers: {
@@ -777,40 +512,40 @@
                 document.getElementById('loadingDiv').classList.add('hidden');
                 
                 if (result.status === 'success') {
-                    currentInvoiceData = result.invoiceData;
-                    const invoiceId = result.invoiceId;
+                    currentInvoiceData = {
+                        id: result.invoiceId,
+                        ...data
+                    };
                     
-                    document.getElementById('generatedId').textContent = invoiceId;
+                    document.getElementById('generatedId').textContent = result.invoiceId;
                     
                     // Generate barcode
-                    generateBarcode(invoiceId);
+                    document.getElementById('barcodeDiv').innerHTML = '';
+                    JsBarcode("#barcodeDiv", result.invoiceId, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 80,
+                        displayValue: true,
+                        fontSize: 14,
+                        textAlign: "center",
+                        textPosition: "bottom",
+                        textMargin: 8,
+                        fontOptions: "bold",
+                        background: "#ffffff",
+                        lineColor: "#000000"
+                    });
+
                     document.getElementById('successDiv').classList.remove('hidden');
                 } else {
-                    alert('❌ Error: ' + (result.message || 'Failed to generate invoice'));
+                    alert('Error: ' + result.message);
                     document.getElementById('generateForm').classList.remove('hidden');
                 }
             })
             .catch(error => {
-                console.error('API Error:', error);
+                console.error('Error:', error);
                 document.getElementById('loadingDiv').classList.add('hidden');
                 document.getElementById('generateForm').classList.remove('hidden');
-                alert('❌ Failed to generate invoice. Please check your connection and try again.');
-            });
-        }
-
-        function generateBarcode(text) {
-            const svg = document.getElementById('barcodeDiv');
-            svg.innerHTML = '';
-            
-            JsBarcode(svg, text, {
-                format: "CODE128",
-                width: 2,
-                height: 100,
-                displayValue: true,
-                fontSize: 14,
-                textMargin: 10,
-                background: "#ffffff",
-                lineColor: "#000000"
+                alert('Failed to generate invoice. Please try again.');
             });
         }
 
@@ -819,405 +554,399 @@
             document.getElementById('successDiv').classList.add('hidden');
             
             // Clear form fields
-            const fields = ['invoiceNumber', 'ewaybillNo', 'gstNumber', 'productId', 'quantity', 'totalCost'];
-            fields.forEach(field => {
-                document.getElementById(field).value = '';
-            });
+            document.getElementById('invoiceNumber').value = '';
+            document.getElementById('ewaybillNo').value = '';
+            document.getElementById('gstNumber').value = '';
+            document.getElementById('productId').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('totalCost').value = '';
+            
+            currentInvoiceData = null;
         }
 
-        function addToStack() {
-            if (!currentInvoiceData) return;
+        function addToPrintStack() {
+            if (!currentInvoiceData) {
+                alert('No invoice data available');
+                return;
+            }
 
             // Check if already in stack
-            const exists = barcodeStack.find(item => item.id === currentInvoiceData.id);
-            if (exists) {
-                alert('⚠️ This invoice is already in the print stack!');
+            if (printStack.find(item => item.id === currentInvoiceData.id)) {
+                alert('This invoice is already in the print stack');
                 return;
             }
 
-            const stackItem = {
+            printStack.push({
                 ...currentInvoiceData,
-                barcodeHtml: document.getElementById('barcodeDiv').outerHTML
-            };
+                timestamp: new Date().toLocaleString()
+            });
 
-            barcodeStack.push(stackItem);
-            updateStackDisplay();
-            
-            // Success feedback
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
-            btn.classList.add('btn-success');
-            btn.classList.remove('btn-primary');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-            }, 2000);
+            updatePrintStack();
+            alert('Invoice added to print stack');
         }
 
-        function updateStackDisplay() {
-            const stackContainer = document.getElementById('barcodeStack');
-            const stackItems = document.getElementById('stackItems');
+        function updatePrintStack() {
+            const stackItems = document.getElementById('printStackItems');
             const stackCount = document.getElementById('stackCount');
-            const stackCountBtn = document.getElementById('stackCountBtn');
+            const printAllBtn = document.getElementById('printAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
 
-            if (barcodeStack.length === 0) {
-                stackContainer.classList.add('hidden');
-                return;
-            }
+            stackCount.textContent = printStack.length;
 
-            stackContainer.classList.remove('hidden');
-            stackCount.textContent = barcodeStack.length;
-            stackCountBtn.textContent = barcodeStack.length;
-
-            let html = '';
-            barcodeStack.forEach((item, index) => {
-                const miniBarcode = `<svg class="barcode-mini-svg" width="80" height="30"></svg>`;
-                html += `<div class="barcode-item">
-                    <div class="barcode-preview">
-                        <div class="barcode-mini" id="mini-${index}">${miniBarcode}</div>
-                        <div class="barcode-info">
-                            <div class="barcode-id">${item.id}</div>
-                            <div class="barcode-details">Invoice: ${item.invoiceNumber} | Product: ${item.productId} | Qty: ${item.quantity} | ₹${parseFloat(item.totalCost).toLocaleString()}</div>
-                        </div>
+            if (printStack.length === 0) {
+                stackItems.innerHTML = `
+                    <div class="empty-stack">
+                        <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>The print stack is empty.</p>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromStack(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>`;
-            });
-
-            stackItems.innerHTML = html;
-
-            // Generate mini barcodes
-            barcodeStack.forEach((item, index) => {
-                const miniSvg = document.querySelector(`#mini-${index} .barcode-mini-svg`);
-                if (miniSvg) {
-                    JsBarcode(miniSvg, item.id, {
-                        format: "CODE128",
-                        width: 1,
-                        height: 25,
-                        displayValue: false,
-                        background: "#ffffff",
-                        lineColor: "#000000"
-                    });
-                }
-            });
+                `;
+                printAllBtn.disabled = true;
+                clearAllBtn.disabled = true;
+            } else {
+                let html = '';
+                printStack.forEach((item, index) => {
+                    html += `
+                        <div class="print-item">
+                            <div class="print-item-info">
+                                <strong>${item.id}</strong> - ${item.invoiceNumber}
+                                <br><small style="color: #6b7280;">Added: ${item.timestamp}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-print-action btn-sm me-2" onclick="printSingleBarcode(${index})">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn btn-clear-action btn-sm" onclick="removeFromStack(${index})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                stackItems.innerHTML = html;
+                printAllBtn.disabled = false;
+                clearAllBtn.disabled = false;
+            }
         }
 
         function removeFromStack(index) {
-            if (confirm('Remove this item from print stack?')) {
-                barcodeStack.splice(index, 1);
-                updateStackDisplay();
-            }
+            printStack.splice(index, 1);
+            updatePrintStack();
         }
 
-        function clearStack() {
+        function clearPrintStack() {
+            if (printStack.length === 0) return;
+            
             if (confirm('Clear all items from print stack?')) {
-                barcodeStack = [];
-                updateStackDisplay();
+                printStack = [];
+                updatePrintStack();
             }
         }
 
-        function printAll() {
-            if (barcodeStack.length === 0) {
-                alert('⚠️ No items in print stack');
+        function printSingleBarcode(index) {
+            const item = printStack[index];
+            if (!item) return;
+
+            const printContent = createPrintContent([item]);
+            document.getElementById('printContent').innerHTML = printContent;
+            document.getElementById('printContent').style.display = 'block';
+            
+            setTimeout(() => {
+                window.print();
+                document.getElementById('printContent').style.display = 'none';
+            }, 100);
+        }
+
+        function printAllBarcodes() {
+            if (printStack.length === 0) {
+                alert('Print stack is empty');
                 return;
             }
 
-            let printLabelsHtml = '';
-            
-            barcodeStack.forEach(item => {
-                const barcodeId = `barcode-print-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                printLabelsHtml += `<div class="print-label">
-                    <div class="print-company">KL Technology Solutions</div>
-                    <div class="print-barcode">
-                        <svg id="${barcodeId}" width="300" height="60"></svg>
-                    </div>
-                    <div class="print-id">${item.id}</div>
-                </div>`;
-            });
-
-            const printContainer = document.querySelector('.print-container');
-            const printLabels = document.getElementById('printLabels');
-            printLabels.innerHTML = printLabelsHtml;
-            
-            // Generate barcodes for printing
-            barcodeStack.forEach((item, index) => {
-                const printBarcodeElement = printLabels.querySelector(`svg[id^="barcode-print-"]`);
-                if (printBarcodeElement) {
-                    JsBarcode(printBarcodeElement, item.id, {
-                        format: "CODE128",
-                        width: 2,
-                        height: 60,
-                        displayValue: false,
-                        background: "#ffffff",
-                        lineColor: "#000000"
-                    });
-                }
-            });
-
-            // Move print container to body temporarily for printing
-            document.body.appendChild(printContainer);
-            printContainer.style.position = 'static';
-            printContainer.style.left = 'auto';
-            printContainer.style.top = 'auto';
+            const printContent = createPrintContent(printStack);
+            document.getElementById('printContent').innerHTML = printContent;
+            document.getElementById('printContent').style.display = 'block';
             
             setTimeout(() => {
                 window.print();
-                
-                // Move back after printing
-                setTimeout(() => {
-                    printContainer.style.position = 'absolute';
-                    printContainer.style.left = '-9999px';
-                    printContainer.style.top = '-9999px';
-                    document.querySelector('.container-main').appendChild(printContainer);
-                }, 1000);
-            }, 500);
+                document.getElementById('printContent').style.display = 'none';
+            }, 100);
         }
 
-        function printSingle() {
-            if (!currentInvoiceData) return;
+        function createPrintContent(items) {
+            let content = `
+                <style>
+                    @page { 
+                        margin: 20mm; 
+                        size: A4;
+                    }
+                    .print-page {
+                        font-family: Arial, sans-serif;
+                        page-break-after: always;
+                    }
+                    .print-page:last-child {
+                        page-break-after: auto;
+                    }
+                    .print-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #4f46e5;
+                        padding-bottom: 20px;
+                    }
+                    .print-company {
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #4f46e5;
+                        margin-bottom: 5px;
+                    }
+                    .print-subtitle {
+                        font-size: 14px;
+                        color: #666;
+                    }
+                    .print-barcode-container {
+                        text-align: center;
+                        margin: 40px 0;
+                        padding: 30px;
+                        border: 2px solid #e5e7eb;
+                        border-radius: 10px;
+                    }
+                    .print-invoice-id {
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin: 20px 0;
+                        font-family: 'Courier New', monospace;
+                    }
+                    .print-details {
+                        margin-top: 30px;
+                        border-top: 1px solid #e5e7eb;
+                        padding-top: 20px;
+                    }
+                    .print-detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        padding: 5px 0;
+                        border-bottom: 1px dotted #ccc;
+                    }
+                    .print-detail-label {
+                        font-weight: bold;
+                    }
+                    .print-detail-value {
+                        font-family: 'Courier New', monospace;
+                    }
+                </style>
+            `;
 
-            const barcodeId = `barcode-single-${Date.now()}`;
-            const printLabelsHtml = `<div class="print-label">
-                <div class="print-company">KL Technology Solutions</div>
-                <div class="print-barcode">
-                    <svg id="${barcodeId}" width="300" height="60"></svg>
-                </div>
-                <div class="print-id">${currentInvoiceData.id}</div>
-            </div>`;
-
-            const printContainer = document.querySelector('.print-container');
-            const printLabels = document.getElementById('printLabels');
-            printLabels.innerHTML = printLabelsHtml;
-            
-            // Generate barcode for printing
-            const printBarcodeElement = document.getElementById(barcodeId);
-            JsBarcode(printBarcodeElement, currentInvoiceData.id, {
-                format: "CODE128",
-                width: 2,
-                height: 60,
-                displayValue: false,
-                background: "#ffffff",
-                lineColor: "#000000"
+            items.forEach((item, index) => {
+                const barcodeId = `printBarcode${index}`;
+                content += `
+                    <div class="print-page">
+                        <div class="print-header">
+                            <div class="print-company">KL Technology Solutions</div>
+                            <div class="print-subtitle">Invoice Barcode</div>
+                        </div>
+                        
+                        <div class="print-barcode-container">
+                            <svg id="${barcodeId}"></svg>
+                            <div class="print-invoice-id">${item.id}</div>
+                        </div>
+                        
+                        <div class="print-details">
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">Invoice Number:</span>
+                                <span class="print-detail-value">${item.invoiceNumber}</span>
+                            </div>
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">E-way Bill:</span>
+                                <span class="print-detail-value">${item.ewaybillNo}</span>
+                            </div>
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">GST Number:</span>
+                                <span class="print-detail-value">${item.gstNumber}</span>
+                            </div>
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">Product ID:</span>
+                                <span class="print-detail-value">${item.productId}</span>
+                            </div>
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">Quantity:</span>
+                                <span class="print-detail-value">${item.quantity}</span>
+                            </div>
+                            <div class="print-detail-row">
+                                <span class="print-detail-label">Total Cost:</span>
+                                <span class="print-detail-value">₹${parseFloat(item.totalCost).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
 
-            // Move print container to body temporarily for printing
-            document.body.appendChild(printContainer);
-            printContainer.style.position = 'static';
-            printContainer.style.left = 'auto';
-            printContainer.style.top = 'auto';
-            
+            // Generate barcodes after content is added
             setTimeout(() => {
-                window.print();
-                
-                // Move back after printing
-                setTimeout(() => {
-                    printContainer.style.position = 'absolute';
-                    printContainer.style.left = '-9999px';
-                    printContainer.style.top = '-9999px';
-                    document.querySelector('.container-main').appendChild(printContainer);
-                }, 1000);
-            }, 500);
+                items.forEach((item, index) => {
+                    const barcodeId = `#printBarcode${index}`;
+                    try {
+                        JsBarcode(barcodeId, item.id, {
+                            format: "CODE128",
+                            width: 2,
+                            height: 100,
+                            displayValue: false,
+                            background: "#ffffff",
+                            lineColor: "#000000"
+                        });
+                    } catch (error) {
+                        console.error('Error generating barcode for print:', error);
+                    }
+                });
+            }, 50);
+
+            return content;
         }
 
         function downloadBarcode() {
             const svg = document.getElementById('barcodeDiv');
-            if (!svg) return;
-
-            // Create canvas from SVG
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const data = (new XMLSerializer()).serializeToString(svg);
-            const DOMURL = window.URL || window.webkitURL || window;
-            const img = new Image();
-            const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
-            const url = DOMURL.createObjectURL(svgBlob);
-
-            img.onload = function () {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                DOMURL.revokeObjectURL(url);
-
-                // Download
-                const link = document.createElement('a');
-                link.download = `invoice-barcode-${currentInvoiceData.id}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            };
-            img.src = url;
-        }
-
-        // Scanner Functions
-        function initializeScanner() {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("qr-reader");
+            if (!svg) {
+                alert('No barcode available to download');
+                return;
             }
-        }
 
-        function showScanner(type) {
-            document.querySelectorAll('.scanner-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            if (type === 'camera') {
-                document.getElementById('cameraScanner').classList.remove('hidden');
-                document.getElementById('manualScanner').classList.add('hidden');
-            } else {
-                document.getElementById('cameraScanner').classList.add('hidden');
-                document.getElementById('manualScanner').classList.remove('hidden');
-                if (scannerActive) {
-                    stopScanner();
-                }
+            try {
+                // Convert SVG to canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const data = new XMLSerializer().serializeToString(svg);
+                const DOMURL = window.URL || window.webkitURL || window;
+                
+                const img = new Image();
+                const svgBlob = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
+                const url = DOMURL.createObjectURL(svgBlob);
+                
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    DOMURL.revokeObjectURL(url);
+                    
+                    // Download
+                    const link = document.createElement('a');
+                    link.download = `barcode-${document.getElementById('generatedId').textContent}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                };
+                
+                img.src = url;
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Failed to download barcode');
             }
-        }
-
-        function toggleScanner() {
-            if (scannerActive) {
-                stopScanner();
-            } else {
-                startScanner();
-            }
-        }
-
-        function startScanner() {
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 300, height: 200 }
-            };
-
-            html5QrCode.start(
-                { facingMode: "environment" },
-                config,
-                onScanSuccess,
-                onScanFailure
-            ).then(() => {
-                scannerActive = true;
-                document.getElementById('startStopBtn').innerHTML = '<i class="fas fa-stop me-1"></i>Stop Scanner';
-                document.getElementById('startStopBtn').classList.remove('btn-outline-primary');
-                document.getElementById('startStopBtn').classList.add('btn-danger');
-            }).catch(err => {
-                alert('❌ Could not start camera scanner: ' + err);
-            });
-        }
-
-        function stopScanner() {
-            if (html5QrCode && scannerActive) {
-                html5QrCode.stop().then(() => {
-                    scannerActive = false;
-                    document.getElementById('startStopBtn').innerHTML = '<i class="fas fa-play me-1"></i>Start Scanner';
-                    document.getElementById('startStopBtn').classList.remove('btn-danger');
-                    document.getElementById('startStopBtn').classList.add('btn-outline-primary');
-                }).catch(err => {
-                    console.error('Error stopping scanner:', err);
-                });
-            }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            stopScanner();
-            searchInvoiceById(decodedText);
-        }
-
-        function onScanFailure(error) {
-            // Ignore scan failures - they happen frequently
         }
 
         function searchInvoice() {
             const searchTerm = document.getElementById('searchInput').value.trim();
             
             if (!searchTerm) {
-                alert('⚠️ Please enter Invoice ID or Number');
+                alert('Please enter Invoice ID or Invoice Number');
                 return;
             }
 
-            searchInvoiceById(searchTerm);
-        }
-
-        function searchInvoiceById(searchTerm) {
-            // Show loading state
-            document.getElementById('invoiceDetails').classList.add('hidden');
+            const searchUrl = `${API_URL}?action=getInvoiceById&id=${encodeURIComponent(searchTerm)}`;
             
-            // Make actual API call to search for invoice
-            fetch(API_URL + '?action=getInvoiceById&id=' + encodeURIComponent(searchTerm))
+            fetch(searchUrl)
             .then(response => response.json())
             .then(result => {
-                if (result.status === 'success' && result.invoice) {
+                if (result.status === 'success') {
                     const invoice = result.invoice;
                     
                     document.getElementById('scannedId').textContent = invoice.id;
                     
                     const detailsHtml = `
-                        <div class="detail-row"><span class="detail-label">Invoice Number:</span><span class="detail-value">${invoice.invoiceNumber}</span></div>
-                        <div class="detail-row"><span class="detail-label">E-way Bill:</span><span class="detail-value">${invoice.ewaybillNo}</span></div>
-                        <div class="detail-row"><span class="detail-label">GST Number:</span><span class="detail-value">${invoice.gstNumber}</span></div>
-                        <div class="detail-row"><span class="detail-label">Product ID:</span><span class="detail-value">${invoice.productId}</span></div>
-                        <div class="detail-row"><span class="detail-label">Quantity:</span><span class="detail-value">${invoice.quantity}</span></div>
-                        <div class="detail-row"><span class="detail-label">Total Cost:</span><span class="detail-value">₹${parseFloat(invoice.totalCost).toLocaleString()}</span></div>
-                        <div class="detail-row"><span class="detail-label">Created:</span><span class="detail-value">${new Date(invoice.creationDate).toLocaleString()}</span></div>
+                        <div class="detail-row">
+                            <span class="detail-label">Invoice Number:</span>
+                            <span class="detail-value">${invoice.invoiceNumber}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">E-way Bill:</span>
+                            <span class="detail-value">${invoice.ewaybillNo}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">GST Number:</span>
+                            <span class="detail-value">${invoice.gstNumber}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Product ID:</span>
+                            <span class="detail-value">${invoice.productId}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Quantity:</span>
+                            <span class="detail-value">${invoice.quantity}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Total Cost:</span>
+                            <span class="detail-value">₹${parseFloat(invoice.totalCost).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Created:</span>
+                            <span class="detail-value">${new Date(invoice.creationDate).toLocaleString()}</span>
+                        </div>
                     `;
                     
                     document.getElementById('detailsContent').innerHTML = detailsHtml;
                     document.getElementById('invoiceDetails').classList.remove('hidden');
                 } else {
-                    alert('❌ Invoice not found: ' + searchTerm);
+                    alert('Invoice not found: ' + result.message);
                 }
             })
             .catch(error => {
-                console.error('Search Error:', error);
-                alert('❌ Search failed. Please check your connection and try again.');
+                console.error('Search error:', error);
+                alert('Search failed. Please try again.');
             });
         }
 
         function resetSearch() {
             document.getElementById('searchInput').value = '';
             document.getElementById('invoiceDetails').classList.add('hidden');
-            
-            // Restart scanner if on camera mode
-            if (!document.getElementById('cameraScanner').classList.contains('hidden') && !scannerActive) {
-                startScanner();
-            }
         }
 
         function printInvoiceDetails() {
-            window.print();
-        }
+            const invoiceDetails = document.getElementById('invoiceDetails');
+            if (!invoiceDetails || invoiceDetails.classList.contains('hidden')) {
+                alert('No invoice details to print');
+                return;
+            }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Test API connection on load
-            testAPIConnection();
+            const printContent = `
+                <style>
+                    @page { margin: 20mm; }
+                    body { font-family: Arial, sans-serif; }
+                    .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #4f46e5; padding-bottom: 20px; }
+                    .print-company { font-size: 24px; font-weight: bold; color: #4f46e5; }
+                    .invoice-id { font-size: 18px; font-weight: bold; margin: 20px 0; font-family: 'Courier New', monospace; background: #4f46e5; color: white; padding: 10px; border-radius: 8px; display: inline-block; }
+                    .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px dotted #ccc; }
+                    .detail-label { font-weight: bold; }
+                    .detail-value { font-family: 'Courier New', monospace; }
+                </style>
+                <div class="print-header">
+                    <div class="print-company">KL Technology Solutions</div>
+                    <div>Invoice Details</div>
+                </div>
+                <div style="text-align: center;">
+                    <div class="invoice-id">${document.getElementById('scannedId').textContent}</div>
+                </div>
+                ${document.getElementById('detailsContent').innerHTML}
+            `;
+
+            document.getElementById('printContent').innerHTML = printContent;
+            document.getElementById('printContent').style.display = 'block';
             
-            // Add some interactive feedback
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentElement.style.transform = 'translateY(-2px)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.style.transform = 'translateY(0)';
-                });
-            });
-        });
-
-        // Test API connection
-        function testAPIConnection() {
-            fetch(API_URL + '?action=test')
-            .then(response => response.json())
-            .then(result => {
-                console.log('✅ API Connection successful:', result);
-            })
-            .catch(error => {
-                console.warn('⚠️ API Connection test failed:', error);
-                console.log('API URL being used:', API_URL);
-            });
+            setTimeout(() => {
+                window.print();
+                document.getElementById('printContent').style.display = 'none';
+            }, 100);
         }
+
+        // Initialize print stack on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePrintStack();
+        });
     </script>
 </body>
 </html>
