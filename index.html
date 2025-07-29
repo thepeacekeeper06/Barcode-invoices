@@ -552,29 +552,7 @@
             document.getElementById('generateForm').classList.add('hidden');
             document.getElementById('loadingDiv').classList.remove('hidden');
 
-            // Simulate API call for demo - replace with actual API
-            setTimeout(() => {
-                const invoiceId = 'KLT-' + Date.now().toString().slice(-8) + '-' + Math.floor(Math.random() * 1000);
-                
-                document.getElementById('loadingDiv').classList.add('hidden');
-                document.getElementById('generatedId').textContent = invoiceId;
-                
-                // Generate barcode
-                JsBarcode("#barcodeDisplay", invoiceId, {
-                    format: "CODE128",
-                    lineColor: "#1e3a8a",
-                    width: 2,
-                    height: 100,
-                    displayValue: true,
-                    fontSize: 16,
-                    textMargin: 10,
-                    background: "white"
-                });
-
-                document.getElementById('successDiv').classList.remove('hidden');
-            }, 2000);
-
-            /* Uncomment for actual API call
+            
             fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify({
