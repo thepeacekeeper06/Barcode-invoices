@@ -713,38 +713,45 @@
             document.getElementById('cameraScanner').classList.remove('hidden');
             scannerActive = true;
 
-            // Initialize Quagga scanner
+            // Initialize Quagga scanner with optimized settings for long barcodes
             Quagga.init({
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
                     target: document.querySelector('#scanner-container'),
                     constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment"
+                        width: { min: 800, ideal: 1280 },
+                        height: { min: 600, ideal: 720 },
+                        facingMode: "environment",
+                        focusMode: "continuous"
+                    },
+                    area: { // Scan full width for long barcodes
+                        top: "30%",
+                        right: "5%",
+                        left: "5%",
+                        bottom: "30%"
                     }
                 },
                 locator: {
-                    patchSize: "medium",
-                    halfSample: true
+                    patchSize: "large", // Larger patch size for better barcode detection
+                    halfSample: false   // Full resolution scanning
                 },
-                numOfWorkers: 2,
-                frequency: 10,
+                numOfWorkers: navigator.hardwareConcurrency || 4,
+                frequency: 8, // Slightly reduced frequency for better accuracy
                 decoder: {
                     readers: [
-                        "code_128_reader",
-                        "ean_reader",
-                        "ean_8_reader",
-                        "code_39_reader",
-                        "code_39_vin_reader",
-                        "codabar_reader",
-                        "upc_reader",
-                        "upc_e_reader",
-                        "i2of5_reader"
-                    ]
+                        "code_128_reader" // Primary reader for your barcodes
+                    ],
+                    multiple: false, // Single barcode detection
+                    debug: {
+                        drawBoundingBox: false,
+                        showFrequency: false,
+                        drawScanline: false,
+                        showPattern: false
+                    }
                 },
-                locate: true
+                locate: true,
+                debug: false
             }, function(err) {
                 if (err) {
                     console.error('Scanner initialization error:', err);
@@ -756,32 +763,50 @@
                 Quagga.start();
             });
 
-            // Listen for successful scans
+            // Listen for successful scans with enhanced validation
             Quagga.onDetected(function(result) {
                 const code = result.codeResult.code;
+                const format = result.codeResult.format;
                 
-                // Validate and process the detected code
+                console.log("Raw detected code:", code, "Format:", format);
+                
+                // Enhanced validation for complete barcode reading
                 if (isValidInvoiceCode(code)) {
                     handleBarcodeDetection(code);
+                } else {
+                    console.log("Invalid or incomplete code detected:", code);
                 }
             });
         }
 
         function isValidInvoiceCode(code) {
-            // Basic validation for invoice codes
-            return code && code.length >= 6 && /^[A-Z0-9\-]+$/i.test(code);
+            // Enhanced validation for invoice codes
+            if (!code || typeof code !== 'string') return false;
+            
+            // Check for minimum length (your code should be longer than 8 characters)
+            if (code.length < 10) return false;
+            
+            // Check if it matches typical invoice ID pattern (starts with KLT-)
+            const invoicePattern = /^KLT-\d{12,15}-\d{2,4}$/i;
+            if (invoicePattern.test(code)) return true;
+            
+            // Also accept other alphanumeric patterns but with minimum length
+            const generalPattern = /^[A-Z0-9\-]{12,}$/i;
+            return generalPattern.test(code);
         }
 
         function handleBarcodeDetection(code) {
-            // Implement confidence-based detection
+            // Implement confidence-based detection with stricter validation
             if (!detectedCodes.has(code)) {
                 detectedCodes.set(code, 1);
             } else {
                 detectedCodes.set(code, detectedCodes.get(code) + 1);
             }
 
-            // Require multiple detections for confidence (reduced threshold)
-            if (detectedCodes.get(code) >= 2) {
+            console.log(`Code "${code}" detected ${detectedCodes.get(code)} times`);
+
+            // Require 3 consistent detections for long codes to ensure accuracy
+            if (detectedCodes.get(code) >= 3) {
                 displayScanResult(code);
             }
         }
