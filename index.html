@@ -349,34 +349,35 @@
             <div id="generateForm">
                 <div class="row">
                     <div class="col-md-6">
-                        <label class="form-label">Invoice Number</label>
-                        <input type="text" id="invoiceNumber" class="form-control" placeholder="e.g., INV-2025-001">
+                        <label class="form-label">Invoice Number *</label>
+                        <input type="text" id="invoiceNumber" class="form-control" placeholder="e.g., INV-2025-001" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">E-way Bill Number</label>
-                        <input type="text" id="ewaybillNo" class="form-control" placeholder="e.g., 123456789012">
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label">GST Number</label>
-                        <input type="text" id="gstNumber" class="form-control" placeholder="e.g., 22AAAAA0000A1Z5" maxlength="15">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Product ID</label>
-                        <input type="text" id="productId" class="form-control" placeholder="e.g., PROD-001">
+                        <label class="form-label">E-way Bill Number *</label>
+                        <input type="text" id="ewaybillNo" class="form-control" placeholder="e.g., 123456789012" required>
                     </div>
                 </div>
                 
                 <div class="row">
                     <div class="col-md-6">
-                        <label class="form-label">Quantity</label>
-                        <input type="number" id="quantity" class="form-control" placeholder="e.g., 5" min="1">
+                        <label class="form-label">GST Number *</label>
+                        <input type="text" id="gstNumber" class="form-control" placeholder="e.g., 22AAAAA0000A1Z5" maxlength="15" required>
+                        <small class="text-muted">Must be exactly 15 characters</small>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Total Cost (₹)</label>
-                        <input type="number" id="totalCost" class="form-control" placeholder="e.g., 1500.00" step="0.01">
+                        <label class="form-label">Product ID *</label>
+                        <input type="text" id="productId" class="form-control" placeholder="e.g., PROD-001" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Quantity *</label>
+                        <input type="number" id="quantity" class="form-control" placeholder="e.g., 5" min="1" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Total Cost (₹) *</label>
+                        <input type="number" id="totalCost" class="form-control" placeholder="e.g., 1500.00" step="0.01" min="0.01" required>
                     </div>
                 </div>
                 
@@ -429,11 +430,18 @@
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title mb-3">Search Invoice</h5>
+            <!-- Search Input with Auto-complete -->
                             <div class="search-input-group">
-                                <input type="text" id="searchInput" class="form-control" placeholder="Enter Invoice ID or Number" style="padding-right: 60px;">
+                                <input type="text" id="searchInput" class="form-control" placeholder="Enter Invoice ID or Number (e.g., KLT-INV-001-123456)" style="padding-right: 60px;">
                                 <button class="camera-scan-btn" onclick="startCameraScanner()" title="Scan with Camera">
                                     <i class="fas fa-camera"></i>
                                 </button>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Tip: You can type the Invoice ID manually or use the camera to scan the barcode
+                                </small>
                             </div>
                             <button class="btn btn-primary w-100 mt-3" onclick="searchInvoice()">
                                 <i class="fas fa-search me-2"></i>Search Invoice
@@ -548,32 +556,50 @@
                 return;
             }
 
-            // Create a demo invoice ID for this example (replace with actual API call)
-            const timestamp = Date.now();
-            const invoiceId = `KLT-${data.invoiceNumber}-${timestamp.toString().slice(-6)}`;
-
             document.getElementById('generateForm').classList.add('hidden');
             document.getElementById('loadingDiv').classList.remove('hidden');
 
-            // Simulate API call with timeout
-            setTimeout(() => {
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'generateInvoice',
+                    invoice: data
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
                 document.getElementById('loadingDiv').classList.add('hidden');
-                document.getElementById('generatedId').textContent = invoiceId;
                 
-                // Generate barcode
-                JsBarcode("#barcodeDisplay", invoiceId, {
-                    format: "CODE128",
-                    lineColor: "#1e3a8a",
-                    width: 2,
-                    height: 100,
-                    displayValue: true,
-                    fontSize: 16,
-                    textMargin: 10,
-                    background: "white"
-                });
+                if (result.status === 'success') {
+                    document.getElementById('generatedId').textContent = result.invoiceId;
+                    
+                    // Generate barcode
+                    JsBarcode("#barcodeDisplay", result.invoiceId, {
+                        format: "CODE128",
+                        lineColor: "#1e3a8a",
+                        width: 2,
+                        height: 100,
+                        displayValue: true,
+                        fontSize: 16,
+                        textMargin: 10,
+                        background: "white"
+                    });
 
-                document.getElementById('successDiv').classList.remove('hidden');
-            }, 1500);
+                    document.getElementById('successDiv').classList.remove('hidden');
+                } else {
+                    alert('Error: ' + result.message);
+                    document.getElementById('generateForm').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error generating invoice:', error);
+                document.getElementById('loadingDiv').classList.add('hidden');
+                document.getElementById('generateForm').classList.remove('hidden');
+                alert('Failed to generate invoice. Please check your connection and try again.');
+            });
         }
 
         function resetForm() {
@@ -589,39 +615,53 @@
         }
 
         function searchInvoice() {
-            const searchTerm = document.getElementById('searchInput').value;
+            const searchTerm = document.getElementById('searchInput').value.trim();
             
             if (!searchTerm) {
                 alert('Please enter Invoice ID or Number');
                 return;
             }
 
-            // Simulate search with demo data
-            const invoice = {
-                id: searchTerm,
-                invoiceNumber: 'INV-2025-001',
-                ewaybillNo: '123456789012',
-                gstNumber: '22AAAAA0000A1Z5',
-                productId: 'PROD-001',
-                quantity: '5',
-                totalCost: '1500.00',
-                creationDate: new Date().toISOString()
-            };
-            
-            document.getElementById('scannedId').textContent = invoice.id;
-            
-            const detailsHtml = `
-                <div class="detail-row"><span class="detail-label">Invoice Number:</span><span class="detail-value">${invoice.invoiceNumber}</span></div>
-                <div class="detail-row"><span class="detail-label">E-way Bill:</span><span class="detail-value">${invoice.ewaybillNo}</span></div>
-                <div class="detail-row"><span class="detail-label">GST Number:</span><span class="detail-value">${invoice.gstNumber}</span></div>
-                <div class="detail-row"><span class="detail-label">Product ID:</span><span class="detail-value">${invoice.productId}</span></div>
-                <div class="detail-row"><span class="detail-label">Quantity:</span><span class="detail-value">${invoice.quantity}</span></div>
-                <div class="detail-row"><span class="detail-label">Total Cost:</span><span class="detail-value">₹${parseFloat(invoice.totalCost).toLocaleString()}</span></div>
-                <div class="detail-row"><span class="detail-label">Created:</span><span class="detail-value">${new Date(invoice.creationDate).toLocaleString()}</span></div>
-            `;
-            
-            document.getElementById('detailsContent').innerHTML = detailsHtml;
-            document.getElementById('invoiceDetails').classList.remove('hidden');
+            // Show loading state
+            updateScannerStatus('Searching invoice...', 'active');
+
+            fetch(API_URL + '?action=getInvoiceById&id=' + encodeURIComponent(searchTerm))
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    const invoice = result.invoice;
+                    
+                    document.getElementById('scannedId').textContent = invoice.id;
+                    
+                    const detailsHtml = `
+                        <div class="detail-row"><span class="detail-label">Invoice Number:</span><span class="detail-value">${invoice.invoiceNumber}</span></div>
+                        <div class="detail-row"><span class="detail-label">E-way Bill:</span><span class="detail-value">${invoice.ewaybillNo}</span></div>
+                        <div class="detail-row"><span class="detail-label">GST Number:</span><span class="detail-value">${invoice.gstNumber}</span></div>
+                        <div class="detail-row"><span class="detail-label">Product ID:</span><span class="detail-value">${invoice.productId}</span></div>
+                        <div class="detail-row"><span class="detail-label">Quantity:</span><span class="detail-value">${invoice.quantity}</span></div>
+                        <div class="detail-row"><span class="detail-label">Total Cost:</span><span class="detail-value">₹${parseFloat(invoice.totalCost).toLocaleString()}</span></div>
+                        <div class="detail-row"><span class="detail-label">Created:</span><span class="detail-value">${new Date(invoice.creationDate).toLocaleString()}</span></div>
+                    `;
+                    
+                    document.getElementById('detailsContent').innerHTML = detailsHtml;
+                    document.getElementById('invoiceDetails').classList.remove('hidden');
+                    
+                    // Clear any scanner status
+                    const statusElement = document.getElementById('scannerStatus');
+                    if (statusElement) {
+                        statusElement.textContent = 'Invoice found successfully!';
+                        statusElement.className = 'scanner-status active';
+                    }
+                } else {
+                    alert('Invoice not found: ' + (result.message || 'Please check the Invoice ID and try again.'));
+                    updateScannerStatus('Invoice not found', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                alert('Search failed. Please check your connection and try again.');
+                updateScannerStatus('Search failed - Check connection', 'error');
+            });
         }
 
         function resetSearch() {
@@ -854,7 +894,40 @@
             printWindow.print();
         }
 
-        // Clean up camera when page is closed/refreshed
+        // Load all invoices on page load for better UX (optional)
+        function loadAllInvoices() {
+            fetch(API_URL + '?action=getAllInvoices')
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    invoiceData = result.invoices;
+                    console.log('Loaded', invoiceData.length, 'invoices from database');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading invoices:', error);
+            });
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing invoices for faster search (optional)
+            loadAllInvoices();
+            
+            // Add enter key support for search
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchInvoice();
+                }
+            });
+        });
+
+        // Utility function to validate invoice ID format
+        function isValidInvoiceId(id) {
+            // Adjust this pattern based on your actual invoice ID format
+            const pattern = /^[A-Z0-9\-]{8,30}$/;
+            return pattern.test(id) && id.length >= 8;
+        }
         window.addEventListener('beforeunload', function() {
             if (scannerActive) {
                 stopCameraScanner();
