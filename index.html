@@ -386,32 +386,46 @@
             .print-label {
                 width: 4in;
                 height: 2.5in;
-                border: 2px solid #000;
-                padding: 15px;
-                margin: 0.1in;
-                display: inline-block;
-                text-align: center;
-                page-break-inside: avoid;
+                border: 2px solid #000 !important;
+                padding: 12px !important;
+                margin: 0.1in !important;
+                display: inline-block !important;
+                text-align: center !important;
+                page-break-inside: avoid !important;
                 background: white !important;
-                box-sizing: border-box;
+                box-sizing: border-box !important;
+                vertical-align: top !important;
             }
             .print-company {
-                font-size: 14px;
-                font-weight: bold;
-                margin-bottom: 10px;
+                font-size: 13px !important;
+                font-weight: bold !important;
+                margin-bottom: 8px !important;
                 color: #000 !important;
             }
             .print-barcode {
-                margin: 10px 0;
-                height: 60px;
+                margin: 8px 0 !important;
+                height: 55px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            .print-barcode svg {
+                max-width: 100% !important;
+                height: 50px !important;
             }
             .print-id {
-                font-size: 11px;
-                font-family: 'Courier New', monospace;
-                font-weight: bold;
-                margin-top: 10px;
+                font-size: 10px !important;
+                font-family: 'Courier New', monospace !important;
+                font-weight: bold !important;
+                margin-top: 8px !important;
                 color: #000 !important;
-                word-break: break-all;
+                word-break: break-all !important;
+                line-height: 1.2 !important;
+            }
+            
+            /* Hide all other elements during print */
+            .container-main {
+                display: none !important;
             }
         }
 
@@ -419,7 +433,7 @@
             width: 4in;
             height: 2.5in;
             border: 2px solid #000;
-            padding: 15px;
+            padding: 12px;
             margin: 5px;
             display: inline-block;
             text-align: center;
@@ -429,22 +443,31 @@
         }
 
         .print-company {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .print-barcode {
-            margin: 10px 0;
-            height: 60px;
+            margin: 8px 0;
+            height: 55px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .print-barcode svg {
+            max-width: 100%;
+            height: 50px;
         }
 
         .print-id {
-            font-size: 11px;
+            font-size: 10px;
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 8px;
             word-break: break-all;
+            line-height: 1.2;
         }
 
         /* Action buttons styling */
@@ -690,8 +713,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Mock API for demo purposes - replace with your actual API
-        const API_URL = "https://script.google.com/macros/s/AKfycbxyyFvcgCKNX4tUkFMFLOZXRp28HAbRnnHuKsg-mXaW4XQmUeUK-EQHPYmm6ltYxtIYlQ/exec";
+        // Google Apps Script API URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbzd5u_Y-Jy09xZhTgTLK6zC9BkIMUOeNCafvyDKTcSJLED0de0Gr1PlzRY0BeSgn1IwyA/exec";
         
         let barcodeStack = [];
         let currentInvoiceData = null;
@@ -753,8 +776,21 @@
             document.getElementById('generateForm').classList.add('hidden');
             document.getElementById('loadingDiv').classList.remove('hidden');
 
-            // Simulate API call
-            setTimeout(() => {
+            // Send data to Google Sheets
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'generateInvoice',
+                    invoice: data
+                })
+            })
+            .then(response => {
+                // Since we're using no-cors mode, we won't get the actual response
+                // Generate the invoice ID client-side and display success
                 const invoiceId = generateInvoiceId();
                 const invoiceData = {
                     id: invoiceId,
@@ -763,9 +799,9 @@
                     createdAt: new Date().toLocaleString()
                 };
 
-                // Store in mock database
+                // Store locally for search functionality
                 mockDatabase[invoiceId] = invoiceData;
-                mockDatabase[data.invoiceNumber] = invoiceData; // Also index by invoice number
+                mockDatabase[data.invoiceNumber] = invoiceData;
 
                 currentInvoiceData = invoiceData;
                 document.getElementById('generatedId').textContent = invoiceId;
@@ -794,7 +830,48 @@
                     document.getElementById('loadingDiv').classList.add('hidden');
                     document.getElementById('generateForm').classList.remove('hidden');
                 }
-            }, 1500);
+            })
+            .catch(error => {
+                console.error('Error sending to Google Sheets:', error);
+                // Still proceed with local functionality
+                const invoiceId = generateInvoiceId();
+                const invoiceData = {
+                    id: invoiceId,
+                    ...data,
+                    creationDate: new Date().toISOString(),
+                    createdAt: new Date().toLocaleString()
+                };
+
+                mockDatabase[invoiceId] = invoiceData;
+                mockDatabase[data.invoiceNumber] = invoiceData;
+
+                currentInvoiceData = invoiceData;
+                document.getElementById('generatedId').textContent = invoiceId;
+                
+                try {
+                    const barcodeElement = document.getElementById('barcodeDiv');
+                    barcodeElement.innerHTML = '';
+                    
+                    JsBarcode(barcodeElement, invoiceId, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 100,
+                        displayValue: true,
+                        fontSize: 14,
+                        textMargin: 10,
+                        fontOptions: "bold",
+                        margin: 10
+                    });
+
+                    document.getElementById('loadingDiv').classList.add('hidden');
+                    document.getElementById('successDiv').classList.remove('hidden');
+                } catch (error) {
+                    console.error('Barcode generation error:', error);
+                    alert('Error generating barcode. Please try again.');
+                    document.getElementById('loadingDiv').classList.add('hidden');
+                    document.getElementById('generateForm').classList.remove('hidden');
+                }
+            });
         }
 
         function generateInvoiceId() {
@@ -928,71 +1005,124 @@
                 return;
             }
 
+            // Create a temporary container to generate print content
+            const tempContainer = document.createElement('div');
+            tempContainer.style.display = 'none';
+            document.body.appendChild(tempContainer);
+
             let printContent = '';
-            
-            barcodeStack.forEach(item => {
+            let processedCount = 0;
+
+            // Process each barcode in the stack
+            barcodeStack.forEach((item, index) => {
                 const tempDiv = document.createElement('div');
-                const tempSvg = document.createElement('svg');
+                const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 tempDiv.appendChild(tempSvg);
+                tempContainer.appendChild(tempDiv);
                 
                 try {
                     JsBarcode(tempSvg, item.id, {
                         format: "CODE128",
                         width: 2,
-                        height: 60,
+                        height: 50,
                         displayValue: true,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontOptions: "bold",
-                        margin: 5
+                        margin: 3,
+                        background: "#ffffff",
+                        lineColor: "#000000"
                     });
+                    
+                    // Convert SVG to string properly
+                    const svgString = new XMLSerializer().serializeToString(tempSvg);
                     
                     printContent += `
                         <div class="print-label">
                             <div class="print-company">KL Technology Solutions</div>
-                            <div class="print-barcode">${tempSvg.outerHTML}</div>
+                            <div class="print-barcode">${svgString}</div>
                             <div class="print-id">${item.id}</div>
                         </div>
                     `;
+                    
+                    processedCount++;
+                    
+                    // If all items processed, proceed with printing
+                    if (processedCount === barcodeStack.length) {
+                        document.getElementById('printContent').innerHTML = printContent;
+                        
+                        // Small delay to ensure content is rendered
+                        setTimeout(() => {
+                            window.print();
+                            // Clean up
+                            document.body.removeChild(tempContainer);
+                        }, 100);
+                    }
                 } catch (error) {
-                    console.error('Print barcode generation error:', error);
+                    console.error('Print barcode generation error for item', index, ':', error);
+                    processedCount++;
+                    
+                    // Continue even if one fails
+                    if (processedCount === barcodeStack.length) {
+                        document.getElementById('printContent').innerHTML = printContent;
+                        setTimeout(() => {
+                            window.print();
+                            document.body.removeChild(tempContainer);
+                        }, 100);
+                    }
                 }
             });
-
-            document.getElementById('printContent').innerHTML = printContent;
-            window.print();
         }
 
         function printSingle() {
-            if (!currentInvoiceData) return;
+            if (!currentInvoiceData) {
+                alert('No invoice data available for printing');
+                return;
+            }
 
+            // Create temporary container for barcode generation
+            const tempContainer = document.createElement('div');
+            tempContainer.style.display = 'none';
+            document.body.appendChild(tempContainer);
+            
             const tempDiv = document.createElement('div');
-            const tempSvg = document.createElement('svg');
+            const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             tempDiv.appendChild(tempSvg);
+            tempContainer.appendChild(tempDiv);
             
             try {
                 JsBarcode(tempSvg, currentInvoiceData.id, {
                     format: "CODE128",
                     width: 2,
-                    height: 60,
+                    height: 50,
                     displayValue: true,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontOptions: "bold",
-                    margin: 5
+                    margin: 3,
+                    background: "#ffffff",
+                    lineColor: "#000000"
                 });
 
+                const svgString = new XMLSerializer().serializeToString(tempSvg);
+                
                 const printContent = `
                     <div class="print-label">
                         <div class="print-company">KL Technology Solutions</div>
-                        <div class="print-barcode">${tempSvg.outerHTML}</div>
+                        <div class="print-barcode">${svgString}</div>
                         <div class="print-id">${currentInvoiceData.id}</div>
                     </div>
                 `;
 
                 document.getElementById('printContent').innerHTML = printContent;
-                window.print();
+                
+                setTimeout(() => {
+                    window.print();
+                    document.body.removeChild(tempContainer);
+                }, 100);
+                
             } catch (error) {
                 console.error('Single print barcode generation error:', error);
                 alert('Error generating barcode for printing');
+                document.body.removeChild(tempContainer);
             }
         }
 
@@ -1120,7 +1250,7 @@
         }
 
         function searchInvoiceById(searchTerm) {
-            // First check mock database (for demo)
+            // First check local database
             const invoice = mockDatabase[searchTerm];
             
             if (invoice) {
@@ -1128,8 +1258,7 @@
                 return;
             }
 
-            // If not found in mock database, try API (you can uncomment this for real API)
-            /*
+            // Try Google Sheets API
             fetch(API_URL + '?action=getInvoiceById&id=' + encodeURIComponent(searchTerm))
             .then(response => response.json())
             .then(result => {
@@ -1141,12 +1270,8 @@
             })
             .catch(error => {
                 console.error('Search error:', error);
-                alert('Search failed. Please try again.');
+                alert(`Invoice not found: ${searchTerm}\n\nNote: Searching in local database only.`);
             });
-            */
-            
-            // For demo purposes, show not found message
-            alert(`Invoice not found: ${searchTerm}\n\nNote: This demo only finds invoices generated in this session.`);
         }
 
         function displayInvoiceDetails(invoice) {
