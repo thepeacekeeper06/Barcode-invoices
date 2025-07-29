@@ -6,8 +6,8 @@
     <title>KL Technology Solutions - Invoice System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #f0f4ff 0%, #e2e8ff 100%);
@@ -333,6 +333,11 @@
             background: #059669;
             color: white;
         }
+        #qr-canvas {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
     </style>
 </head>
 <body>
@@ -340,10 +345,10 @@
         <!-- Header -->
         <div class="header">
             <div class="company-name">
-                <i class="fas fa-barcode"></i>
+                <i class="fas fa-qrcode"></i>
                 KL Technology Solutions
             </div>
-            <div>Invoice Barcode Management System</div>
+            <div>Invoice QR Code Management System</div>
         </div>
 
         <!-- Navigation -->
@@ -355,7 +360,7 @@
             </li>
             <li class="nav-item">
                 <button class="nav-link" onclick="showTab('scan')">
-                    <i class="fas fa-barcode me-2"></i>Scan
+                    <i class="fas fa-qrcode me-2"></i>Scan
                 </button>
             </li>
         </ul>
@@ -402,7 +407,7 @@
                 </div>
                 
                 <button type="button" class="btn btn-primary btn-lg w-100 mt-3" onclick="generateInvoice()">
-                    <i class="fas fa-plus-circle me-2"></i>Generate Invoice Barcode
+                    <i class="fas fa-plus-circle me-2"></i>Generate Invoice QR Code
                 </button>
             </div>
 
@@ -419,15 +424,15 @@
                     <div>Your Invoice ID:</div>
                     <div class="invoice-id" id="generatedId">KLT-12345-678</div>
                     
-                    <div class="barcode-display">
-                        <svg id="barcodeDisplay"></svg>
+                    <div class="qr-display">
+                        <canvas id="qrDisplay"></canvas>
                     </div>
                     
                     <div class="mt-3">
-                        <button class="btn btn-light me-2" onclick="downloadBarcode()">
+                        <button class="btn btn-light me-2" onclick="downloadQRCode()">
                             <i class="fas fa-download me-1"></i>Download
                         </button>
-                        <button class="btn btn-light me-2" onclick="printBarcode()">
+                        <button class="btn btn-light me-2" onclick="printQRCode()">
                             <i class="fas fa-print me-1"></i>Print
                         </button>
                         <button class="btn btn-light" onclick="resetForm()">
@@ -441,8 +446,8 @@
         <!-- Scan Tab -->
         <div id="scanTab" class="content hidden">
             <div class="section-title">
-                <i class="fas fa-barcode"></i>
-                <h3>Scan Invoice Barcode</h3>
+                <i class="fas fa-qrcode"></i>
+                <h3>Scan Invoice QR Code</h3>
             </div>
             
             <div class="row">
@@ -468,13 +473,14 @@
             <div id="cameraScanner" class="camera-scanner hidden">
                 <h5><i class="fas fa-camera me-2"></i>Camera Scanner</h5>
                 <div class="scan-instructions">
-                    Position the barcode within the green frame. Hold steady for accurate scanning.
+                    Position the QR code within the green frame. Hold steady for accurate scanning.
                 </div>
                 <div class="scan-result" id="scanResult">
-                    <i class="fas fa-check-circle me-2"></i>Barcode detected: <span id="scanResultText"></span>
+                    <i class="fas fa-check-circle me-2"></i>QR Code detected: <span id="scanResultText"></span>
                 </div>
                 <div class="camera-preview">
                     <video id="camera-video" autoplay playsinline muted></video>
+                    <canvas id="qr-canvas" class="hidden"></canvas>
                     <div class="scanning-overlay"></div>
                 </div>
                 <div class="mt-3">
@@ -520,6 +526,7 @@
         let scanConfidenceCount = 0;
         let scanDebounceTimer = null;
         let detectedCodes = new Map(); // Track detection frequency
+        let qrScanInterval = null;
 
         function showTab(tabName) {
             // Hide all tabs
@@ -580,16 +587,24 @@
                 if (result.status === 'success') {
                     document.getElementById('generatedId').textContent = result.invoiceId;
                     
-                    // Generate barcode instead of QR code
-                    JsBarcode("#barcodeDisplay", result.invoiceId, {
-                        format: "CODE128",
-                        lineColor: "#1e3a8a",
-                        width: 2,
-                        height: 100,
-                        displayValue: true,
-                        fontSize: 16,
-                        textMargin: 10,
-                        background: "white"
+                    // Generate QR code instead of barcode
+                    const canvas = document.getElementById('qrDisplay');
+                    QRCode.toCanvas(canvas, result.invoiceId, {
+                        width: 200,
+                        height: 200,
+                        color: {
+                            dark: '#1e3a8a',  // Blue color for QR code
+                            light: '#ffffff'  // White background
+                        },
+                        margin: 2,
+                        errorCorrectionLevel: 'M'
+                    }, function (error) {
+                        if (error) {
+                            console.error('QR Code generation error:', error);
+                            alert('Failed to generate QR code');
+                        } else {
+                            console.log('QR Code generated successfully');
+                        }
                     });
 
                     document.getElementById('successDiv').classList.remove('hidden');
@@ -680,9 +695,7 @@
                 video: { 
                     facingMode: 'environment',
                     width: { ideal: 1280, min: 640 },
-                    height: { ideal: 720, min: 480 },
-                    focusMode: 'continuous',
-                    zoom: 1
+                    height: { ideal: 720, min: 480 }
                 } 
             };
 
@@ -693,11 +706,11 @@
                 const video = document.getElementById('camera-video');
                 video.srcObject = stream;
                 
-                // Initialize Quagga scanner when video is ready
+                // Start QR code scanning when video is ready
                 video.addEventListener('loadedmetadata', function() {
-                    // Small delay to ensure video is fully loaded
+                    video.play();
                     setTimeout(() => {
-                        initializeScanner();
+                        startQRScanning();
                     }, 500);
                 });
             })
@@ -708,95 +721,72 @@
             });
         }
 
-        function initializeScanner() {
+        function startQRScanning() {
             const video = document.getElementById('camera-video');
-            const videoRect = video.getBoundingClientRect();
+            const canvas = document.getElementById('qr-canvas');
+            const canvasContext = canvas.getContext('2d');
             
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: video,
-                    constraints: {
-                        width: { min: 640, ideal: 1280 },
-                        height: { min: 480, ideal: 720 },
-                        facingMode: "environment",
-                        focusMode: "continuous"
-                    },
-                    area: { // Define scanning area
-                        top: "25%",
-                        right: "10%",
-                        left: "10%",
-                        bottom: "25%"
-                    }
-                },
-                locator: {
-                    patchSize: "large", // Increased for better accuracy
-                    halfSample: false   // Full sampling for better quality
-                },
-                numOfWorkers: navigator.hardwareConcurrency || 4,
-                frequency: 5, // Reduced frequency for more accurate scanning
-                decoder: {
-                    readers: [
-                        "code_128_reader", // Primary format for your barcodes
-                        "code_39_reader",
-                        "ean_reader",
-                        "ean_8_reader"
-                    ],
-                    multiple: false // Only decode one barcode at a time
-                },
-                locate: true,
-                debug: false
-            }, function(err) {
-                if (err) {
-                    console.error('Scanner initialization error:', err);
-                    alert('Failed to initialize barcode scanner. Please try again.');
-                    stopCameraScanner();
-                    return;
-                }
-                console.log("Scanner initialized successfully");
-                Quagga.start();
-            });
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-            // Listen for successful scans with validation
-            Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                const confidence = result.codeResult.decodedCodes.reduce((sum, code) => sum + (code.error || 0), 0) / result.codeResult.decodedCodes.length;
-                
-                // Validate code format and confidence
-                if (isValidInvoiceCode(code) && confidence < 0.3) {
-                    handleBarcodeDetection(code);
-                } else {
-                    console.log("Low confidence or invalid code:", code, "Confidence:", confidence);
+            function scanFrame() {
+                if (!scannerActive) return;
+
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Draw video frame to canvas
+                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get image data from canvas
+                    const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Scan for QR code
+                    const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert"
+                    });
+
+                    if (qrCode && qrCode.data) {
+                        handleQRDetection(qrCode.data);
+                    }
                 }
-            });
+
+                // Continue scanning
+                if (scannerActive) {
+                    requestAnimationFrame(scanFrame);
+                }
+            }
+
+            // Start the scanning loop
+            requestAnimationFrame(scanFrame);
+        }
+
+        function handleQRDetection(code) {
+            // Validate code format
+            if (isValidInvoiceCode(code)) {
+                // Implement confidence-based detection
+                if (!detectedCodes.has(code)) {
+                    detectedCodes.set(code, 1);
+                } else {
+                    detectedCodes.set(code, detectedCodes.get(code) + 1);
+                }
+
+                // Require multiple detections for confidence
+                if (detectedCodes.get(code) >= 3) {
+                    if (scanDebounceTimer) {
+                        clearTimeout(scanDebounceTimer);
+                    }
+
+                    scanDebounceTimer = setTimeout(() => {
+                        displayScanResult(code);
+                    }, 100);
+                }
+            }
         }
 
         function isValidInvoiceCode(code) {
             // Add validation for your invoice code format
-            // Adjust this regex based on your actual invoice ID format
-            const invoicePattern = /^[A-Z0-9\-]{8,20}$/; // Basic pattern for alphanumeric codes
+            const invoicePattern = /^[A-Z0-9\-]{8,20}$/;
             return invoicePattern.test(code) && code.length >= 8;
-        }
-
-        function handleBarcodeDetection(code) {
-            // Implement confidence-based detection
-            if (!detectedCodes.has(code)) {
-                detectedCodes.set(code, 1);
-            } else {
-                detectedCodes.set(code, detectedCodes.get(code) + 1);
-            }
-
-            // Require multiple detections for confidence
-            if (detectedCodes.get(code) >= 3) {
-                if (scanDebounceTimer) {
-                    clearTimeout(scanDebounceTimer);
-                }
-
-                scanDebounceTimer = setTimeout(() => {
-                    displayScanResult(code);
-                }, 100); // Short debounce to prevent duplicate processing
-            }
         }
 
         function displayScanResult(code) {
@@ -807,12 +797,7 @@
             document.getElementById('scanResult').style.display = 'block';
             document.getElementById('confirmScanBtn').classList.remove('hidden');
             
-            // Pause scanning to prevent multiple detections
-            if (typeof Quagga !== 'undefined') {
-                Quagga.pause();
-            }
-            
-            console.log("Barcode confirmed:", code);
+            console.log("QR Code confirmed:", code);
         }
 
         function confirmScan() {
@@ -835,14 +820,14 @@
                 scanDebounceTimer = null;
             }
             
+            if (qrScanInterval) {
+                clearInterval(qrScanInterval);
+                qrScanInterval = null;
+            }
+            
             lastScannedCode = '';
             scanConfidenceCount = 0;
             detectedCodes.clear();
-            
-            // Stop Quagga scanner
-            if (typeof Quagga !== 'undefined') {
-                Quagga.stop();
-            }
             
             // Stop camera stream
             if (cameraStream) {
@@ -860,51 +845,47 @@
             video.srcObject = null;
         }
 
-        function downloadBarcode() {
-            const svgElement = document.querySelector('#barcodeDisplay');
-            if (svgElement) {
-                // Create a canvas and draw the SVG on it
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set canvas dimensions to match SVG plus padding
-                canvas.width = svgElement.width.baseVal.value + 40;
-                canvas.height = svgElement.height.baseVal.value + 40;
-                
-                // Draw white background
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Convert SVG to data URL
-                const svgData = new XMLSerializer().serializeToString(svgElement);
-                const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-                const url = URL.createObjectURL(svgBlob);
-                
-                // Create image from SVG and draw on canvas when loaded
-                const img = new Image();
-                img.onload = function() {
-                    // Draw the image centered on the canvas
-                    ctx.drawImage(img, 20, 20);
-                    
-                    // Convert canvas to PNG and download
-                    const link = document.createElement('a');
-                    link.download = 'invoice-' + document.getElementById('generatedId').textContent + '.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    URL.revokeObjectURL(url);
-                };
-                img.src = url;
+        function downloadQRCode() {
+            const canvas = document.getElementById('qrDisplay');
+            if (canvas) {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'invoice-qr-' + document.getElementById('generatedId').textContent + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
             }
         }
 
-        function printBarcode() {
-            const barcodeContent = document.getElementById('barcodeDisplay').outerHTML;
+        function printQRCode() {
+            const canvas = document.getElementById('qrDisplay');
             const invoiceId = document.getElementById('generatedId').textContent;
             
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Invoice Barcode</title></head><body style="text-align:center;font-family:Arial;"><h2>KL Technology Solutions</h2><div style="padding:20px;display:inline-block;background:white;margin:20px 0;">' + barcodeContent + '</div><h3>' + invoiceId + '</h3></body></html>');
-            printWindow.document.close();
-            printWindow.print();
+            if (canvas) {
+                const qrDataURL = canvas.toDataURL('image/png');
+                
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Invoice QR Code</title>
+                            <style>
+                                body { text-align: center; font-family: Arial; margin: 20px; }
+                                .qr-container { margin: 20px 0; }
+                                img { border: 1px solid #ddd; padding: 10px; }
+                            </style>
+                        </head>
+                        <body>
+                            <h2>KL Technology Solutions</h2>
+                            <div class="qr-container">
+                                <img src="${qrDataURL}" alt="Invoice QR Code">
+                            </div>
+                            <h3>${invoiceId}</h3>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
         }
 
         // Clean up camera when page is closed/refreshed
